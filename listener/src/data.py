@@ -18,9 +18,7 @@ def collect_sample(ser: serial.Serial) -> None:
 
 
 def _read_sample(ser: serial.Serial) -> Sample:
-    line = ser.readline().decode("ascii").strip()
-
-    print(line)
+    line = ser.readline().decode("ascii").strip()  # Read a line
 
     segments = line.split(",")
 

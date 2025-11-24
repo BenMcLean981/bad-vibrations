@@ -24,15 +24,6 @@ float ACCEL_SENS;        // Sensitivity (will be set dynamically)
 // Define the accelerometer range (±2g, ±4g, ±8g, ±16g)
 #define ACCEL_RANGE 8 // Change this to 2, 4, 8, or 16
 
-// Timer interrupt variables
-hw_timer_t *timer = NULL;
-volatile bool readFlag = false;
-
-void IRAM_ATTR onTimer()
-{
-  readFlag = true; // Set flag to indicate it's time to read data
-}
-
 void setup()
 {
   Wire.begin();
@@ -71,12 +62,6 @@ void setup()
   Wire.endTransmission(true);
 
   Serial.begin(BAUD_RATE);
-
-  // Configure the timer interrupt
-  timer = timerBegin(0, 80, true); // Timer 0, prescaler 80 (1 µs per tick)
-  timerAttachInterrupt(timer, &onTimer, true);
-  timerAlarmWrite(timer, 1000, true); // Trigger every 1000 µs (1 ms)
-  timerAlarmEnable(timer);
 }
 
 int16_t readSensorData()
@@ -100,7 +85,7 @@ void writeValues()
   Serial.print("\n");
 }
 
-void readMPU6050()
+void loop()
 {
   Wire.beginTransmission(MPU_ADDRESS);
   Wire.write(0x3B);
@@ -122,14 +107,8 @@ void readMPU6050()
   Az = (AcZ * G) / ACCEL_SENS;
 
   timestamp = millis();
-}
 
-void loop()
-{
-  if (readFlag)
-  {
-    readFlag = false; // Reset the flag
-    readMPU6050();
-    writeValues();
-  }
+  writeValues();
+
+  delay(1);
 }
