@@ -1,45 +1,114 @@
-
 #include "Arduino.h"
+#include "Wire.h"
 
 #ifndef LED_BUILTIN
-  #define LED_BUILTIN 2
-  #define SOUND_SPEED 0.034
-
-  #define TRIG_PIN 5
-  #define ECHO_PIN 18
+#define LED_BUILTIN 2
 #endif
 
-//define sound speed in cm/uS
+#ifndef BAUD_RATE
+#define BAUD_RATE 115200
+#endif
 
-long duration;
-unsigned long timeStamp;
-float distanceCm;
-float distanceInch;
+#ifndef MPU_ADDRESS
+#define MPU_ADDRESS 0x68
+#endif
 
-void setup() {
-  Serial.begin(115200); // Starts the serial communication
-  pinMode(TRIG_PIN, OUTPUT); // Sets the trigPin as an Output
-  pinMode(ECHO_PIN, INPUT); // Sets the echoPin as an Input
+float Ax, Ay, Az;
+
+unsigned long timestamp;
+
+// Sensitivity constants for different ranges
+const float G = 9.80665; // m/s²
+float ACCEL_SENS;        // Sensitivity (will be set dynamically)
+
+// Define the accelerometer range (±2g, ±4g, ±8g, ±16g)
+#define ACCEL_RANGE 8 // Change this to 2, 4, 8, or 16
+
+void setup()
+{
+  Wire.begin();
+
+  // Set accelerometer full scale range
+  Wire.beginTransmission(MPU_ADDRESS);
+  Wire.write(0x1C); // ACCEL_CONFIG
+
+  // Set the range based on ACCEL_RANGE
+  uint8_t rangeSetting = 0x00; // Default to ±2g
+  switch (ACCEL_RANGE)
+  {
+  case 2:
+    rangeSetting = 0x00;
+    ACCEL_SENS = 16384.0;
+    break;
+  case 4:
+    rangeSetting = 0x08;
+    ACCEL_SENS = 8192.0;
+    break;
+  case 8:
+    rangeSetting = 0x10;
+    ACCEL_SENS = 4096.0;
+    break;
+  case 16:
+    rangeSetting = 0x18;
+    ACCEL_SENS = 2048.0;
+    break;
+  default:
+    rangeSetting = 0x00; // Default to ±2g
+    ACCEL_SENS = 16384.0;
+    break;
+  }
+
+  Wire.write(rangeSetting); // Set the range
+  Wire.endTransmission(true);
+
+  Serial.begin(BAUD_RATE);
 }
 
-void loop() {
-  // Clears the trigPin
-  digitalWrite(TRIG_PIN, LOW);
-  delayMicroseconds(2);
+int16_t readSensorData()
+{
+  return Wire.read() << 8 | Wire.read();
+}
 
-  // Sets the trigPin on HIGH state for 10 micro seconds
-  digitalWrite(TRIG_PIN, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(TRIG_PIN, LOW);
-  
-  // Reads the echoPin, returns the sound wave travel time in microseconds
-  duration = pulseIn(ECHO_PIN, HIGH);
-  
-  // Calculate the distance
-  distanceCm = duration * SOUND_SPEED/2;
-  timeStamp = millis();
-  
-  Serial.println(String(timeStamp) + "," +  String(distanceCm));
+void writeValues()
+{
+  Serial.print(timestamp);
+  Serial.print(",");
 
-  delay(100);
+  Serial.print(Ax);
+  Serial.print(",");
+
+  Serial.print(Ay);
+  Serial.print(",");
+
+  Serial.print(Az);
+
+  Serial.print("\n");
+}
+
+void loop()
+{
+  Wire.beginTransmission(MPU_ADDRESS);
+  Wire.write(0x3B);
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPU_ADDRESS, 14, true);
+
+  int16_t AcX = readSensorData();
+  int16_t AcY = readSensorData();
+  int16_t AcZ = readSensorData();
+
+  readSensorData(); // Tmp
+
+  readSensorData(); // GyX
+  readSensorData(); // GyY
+  readSensorData(); // GyZ
+
+  Ax = (AcX * G) / ACCEL_SENS;
+  Ay = (AcY * G) / ACCEL_SENS;
+  Az = (AcZ * G) / ACCEL_SENS;
+
+  timestamp = millis();
+
+  writeValues();
+
+  delay(1);
 }

@@ -1,3 +1,4 @@
+import math
 import time
 from typing import List
 
@@ -17,13 +18,20 @@ def collect_sample(ser: serial.Serial) -> None:
 
 
 def _read_sample(ser: serial.Serial) -> Sample:
-    line = ser.readline().decode("utf-8").strip()
+    line = ser.readline().decode("ascii").strip()
+
+    print(line)
+
     segments = line.split(",")
 
     timestamp_ms = int(segments[0])
-    distance_cm = float(segments[1])
+    acc_x = float(segments[1])
+    acc_y = float(segments[2])
+    acc_z = float(segments[3])
 
-    return Sample(timestamp_ms, distance_cm)
+    acc = math.sqrt(acc_x**2 + acc_y**2 + acc_z**2)
+
+    return Sample(timestamp_ms, acc)
 
 
 def _try_pushing_sample(sample: Sample) -> None:
