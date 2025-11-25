@@ -8,7 +8,7 @@ from src.lock import LOCK
 from src.data import SAMPLES
 
 WINDOW_SIZE = 512  # Number of samples used for FFT
-MAX_PEAKS = 3  # Number of peaks to annotate
+MAX_PEAKS = 10  # Number of peaks to annotate
 
 FPS = 30
 
@@ -32,8 +32,14 @@ def compute_fft(timestamps, acc):
     if len(acc) < 4:
         return np.array([]), np.array([])
 
-    acc = np.array(acc[-WINDOW_SIZE:])
-    timestamps = np.array(timestamps[-WINDOW_SIZE:])
+    # Ensure the number of samples is a power of 2 (e.g., 2048)
+    slice_size = 2048
+    acc = np.array(acc[-slice_size:])
+    timestamps = np.array(timestamps[-slice_size:])
+
+    # Apply a Hamming window to the signal
+    window = np.hamming(len(acc))
+    acc = acc * window
 
     dt = np.diff(timestamps) / 1000.0
     avg_dt = np.mean(dt)
@@ -44,10 +50,8 @@ def compute_fft(timestamps, acc):
     fft_freqs = np.fft.rfftfreq(len(acc), d=avg_dt)
     fft_mag = np.abs(fft_vals)
 
-    # Exclude the singularity at 0 Hz
-    if len(fft_freqs) > 1:
-        fft_freqs = fft_freqs[1:]
-        fft_mag = fft_mag[1:]
+    fft_freqs = fft_freqs[16:]
+    fft_mag = fft_mag[16:]
 
     return fft_freqs, fft_mag
 
