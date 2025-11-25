@@ -1,4 +1,5 @@
 import math
+import struct
 from typing import List
 
 import serial
@@ -21,27 +22,16 @@ def _read_sample(ser: serial.Serial) -> Sample:
     global line_idx
 
     while True:
-        line = ser.readline().decode("ascii").strip()  # Read a line
-        line_idx += 1
-        is_not_first_line = line_idx != 0
+        byte = ser.read(1)
+        if byte != b"\xaa":
+            continue  # skip until header found
 
-        # Wait until a good line exists
-        if not line.startswith("l:") and not line.endswith("\n"):
-            if is_not_first_line:
-                raise ValueError()
-        else:
-            break
+        data = ser.read(16)
+        timestamp_ms, acc_x, acc_y, acc_z = struct.unpack("<Ifff", data)
 
-    segments = line[2:].split(",")
+        acc = math.sqrt(acc_x**2 + acc_y**2 + acc_z**2)
 
-    timestamp_ms = int(segments[0])
-    acc_x = float(segments[1])
-    acc_y = float(segments[2])
-    acc_z = float(segments[3])
-
-    acc = math.sqrt(acc_x**2 + acc_y**2 + acc_z**2)
-
-    return Sample(timestamp_ms, acc)
+        return Sample(timestamp_ms, acc)
 
 
 def _try_pushing_sample(sample: Sample) -> None:

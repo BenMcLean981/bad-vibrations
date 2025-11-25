@@ -4,6 +4,12 @@
 hw_timer_t *timer = nullptr;
 volatile bool tick = false;
 
+struct Sample
+{
+  uint32_t timestamp; // 4 bytes
+  float x, y, z;      // 4 + 4 + 4 bytes
+};
+
 Acceleration latestAcc;
 unsigned long latestTimestamp;
 
@@ -32,19 +38,15 @@ void loop()
   if (tick)
   {
     // read timestamp and values in main context
-    latestTimestamp = millis();
-    latestAcc = readAcceleration();
+    unsigned long timestamp = millis();
+    Acceleration acc = readAcceleration();
 
     // reset flag
     tick = false;
 
-    Serial.print("l:");
-    Serial.print(latestTimestamp);
-    Serial.print(",");
-    Serial.print(latestAcc.x, 6);
-    Serial.print(",");
-    Serial.print(latestAcc.y, 6);
-    Serial.print(",");
-    Serial.println(latestAcc.z, 6);
+    Sample s = {timestamp, acc.x, acc.y, acc.z};
+    uint8_t header = 0xAA;
+    Serial.write(&header, 1);
+    Serial.write((uint8_t *)&s, sizeof(s));
   }
 }

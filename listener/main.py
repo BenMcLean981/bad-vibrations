@@ -1,3 +1,4 @@
+import struct
 import threading
 import matplotlib
 import serial
