@@ -1,41 +1,45 @@
 #include "Arduino.h"
-#include "Wire.h"
+#include "accelerometer.h"
 
-#include <accelerometer.h>
+volatile bool dataReady = false;
+Acceleration latestAcc;
+unsigned long latestTimestamp;
 
-#ifndef BAUD_RATE
-#define BAUD_RATE 115200
-#endif
-
-float Ax, Ay, Az;
-
-unsigned long timestamp;
+void IRAM_ATTR onMPUDataReady()
+{
+  // keep ISR tiny
+  dataReady = true;
+}
 
 void setup()
 {
+  Serial.begin(115200);
+  delay(100);
+
   setupAccelerometer();
 
-  Serial.begin(BAUD_RATE);
-}
-
-void writeValues(unsigned long timestamp, Acceleration acc)
-{
-  String line = "l:" +
-                String(timestamp) + "," +
-                String(acc.x) + "," +
-                String(acc.y) + "," +
-                String(acc.z) + '\n';
-
-  Serial.print(line);
+  // attach ESP32 interrupt on GPIO 27 (INT from GY-521)
+  attachInterruptAccel(27, onMPUDataReady);
 }
 
 void loop()
 {
-  Acceleration acc = readAcceleration();
+  if (dataReady)
+  {
+    // read timestamp and values in main context
+    latestTimestamp = millis();
+    latestAcc = readAcceleration();
 
-  timestamp = millis();
+    // reset flag
+    dataReady = false;
 
-  writeValues(timestamp, acc);
-
-  delay(1);
+    Serial.print("l:");
+    Serial.print(latestTimestamp);
+    Serial.print(",");
+    Serial.print(latestAcc.x, 6);
+    Serial.print(",");
+    Serial.print(latestAcc.y, 6);
+    Serial.print(",");
+    Serial.println(latestAcc.z, 6);
+  }
 }
