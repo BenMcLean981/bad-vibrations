@@ -24,9 +24,9 @@ void writeValues(unsigned long timestamp, Acceleration acc)
                 String(timestamp) + "," +
                 String(acc.x) + "," +
                 String(acc.y) + "," +
-                String(acc.z);
+                String(acc.z) + '\n';
 
-  Serial.println(line);
+  Serial.print(line);
 }
 
 void loop()

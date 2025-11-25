@@ -10,6 +10,8 @@ from src.data import SAMPLES
 WINDOW_SIZE = 512  # Number of samples used for FFT
 MAX_PEAKS = 3  # Number of peaks to annotate
 
+FPS = 30
+
 
 def detect_peaks(freqs, mags):
     """Return (peak_freqs, peak_mags) for the FFT spectrum."""
@@ -47,6 +49,7 @@ def compute_fft(timestamps, acc):
 
 def update_plot(frame, acc_line, fft_line, fft_ax, peak_texts):
     """Update both live plots."""
+
     with LOCK:
         timestamps = [s.timestamp_ms for s in SAMPLES]
         acc = [s.acc_mag for s in SAMPLES]
@@ -106,7 +109,7 @@ def setup_plot():
         fig,
         update_plot,
         fargs=(acc_line, fft_line, ax2, peak_texts),
-        interval=100,
+        interval=(1 / FPS),
         cache_frame_data=False,
     )
 

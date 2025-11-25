@@ -1,48 +1,48 @@
-import io
 import math
-from typing import List, Optional
+from typing import List
+
+import serial
 
 from src.lock import LOCK
 from src.sample import Sample
 
+line_idx = -1
 
 SAMPLES: List[Sample] = []
 
-has_read = False
+
+def collect_sample(ser: serial.Serial) -> None:
+    sample = _read_sample(ser)
+    with LOCK:  # Ensure thread-safe access to SAMPLES
+        _try_pushing_sample(sample)
 
 
-def collect_sample(text_stream: io.TextIOWrapper) -> None:
-    sample = _read_sample(text_stream)
+def _read_sample(ser: serial.Serial) -> Sample:
+    global line_idx
 
-    if sample:
-        with LOCK:
-            _try_pushing_sample(sample)
+    while True:
+        line = ser.readline().decode("ascii").strip()  # Read a line
+        line_idx += 1
+        is_not_first_line = line_idx != 0
 
-
-def _read_sample(text_stream: io.TextIOWrapper) -> Optional[Sample]:
-    global has_read
-
-    line = text_stream.readline()
-
-    if not line.startswith("l:"):
-        if not has_read:
-            return
+        # Wait until a good line exists
+        if not line.startswith("l:") and not line.endswith("\n"):
+            if is_not_first_line:
+                raise ValueError()
         else:
-            raise ValueError("Line format error")
+            break
 
-    has_read = True
-
+    print(line)
     segments = line[2:].split(",")
 
     timestamp_ms = int(segments[0])
-
     acc_x = float(segments[1])
     acc_y = float(segments[2])
     acc_z = float(segments[3])
 
-    acc_mag = math.sqrt(acc_x**2 + acc_y**2 + acc_z**2)
+    acc = math.sqrt(acc_x**2 + acc_y**2 + acc_z**2)
 
-    return Sample(timestamp_ms, acc_mag)
+    return Sample(timestamp_ms, acc)
 
 
 def _try_pushing_sample(sample: Sample) -> None:
