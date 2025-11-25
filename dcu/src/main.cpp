@@ -28,12 +28,17 @@ void setup()
 {
   Wire.begin();
 
-  // Set accelerometer full scale range
+  // Wake up MPU6050
   Wire.beginTransmission(MPU_ADDRESS);
-  Wire.write(0x1C); // ACCEL_CONFIG
+  Wire.write(0x6B);
+  Wire.write(0x00);
+  Wire.endTransmission();
 
-  // Set the range based on ACCEL_RANGE
-  uint8_t rangeSetting = 0x00; // Default to ±2g
+  // Set accelerometer range
+  Wire.beginTransmission(MPU_ADDRESS);
+  Wire.write(0x1C);
+
+  uint8_t rangeSetting = 0x00;
   switch (ACCEL_RANGE)
   {
   case 2:
@@ -52,14 +57,10 @@ void setup()
     rangeSetting = 0x18;
     ACCEL_SENS = 2048.0;
     break;
-  default:
-    rangeSetting = 0x00; // Default to ±2g
-    ACCEL_SENS = 16384.0;
-    break;
   }
 
-  Wire.write(rangeSetting); // Set the range
-  Wire.endTransmission(true);
+  Wire.write(rangeSetting);
+  Wire.endTransmission();
 
   Serial.begin(BAUD_RATE);
 }

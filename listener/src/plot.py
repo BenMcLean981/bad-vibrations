@@ -38,6 +38,8 @@ def compute_fft(timestamps, acc):
     if avg_dt <= 0:
         return np.array([]), np.array([])
 
+    fs = 1.0 / avg_dt  # sampling frequency
+
     fft_vals = np.fft.rfft(acc)
     fft_freqs = np.fft.rfftfreq(len(acc), d=avg_dt)
     fft_mag = np.abs(fft_vals)
@@ -101,7 +103,7 @@ def setup_plot():
 
     peak_texts = []
 
-    _ani = FuncAnimation(
+    ani = FuncAnimation(
         fig,
         update_plot,
         fargs=(acc_line, fft_line, ax2, peak_texts),
