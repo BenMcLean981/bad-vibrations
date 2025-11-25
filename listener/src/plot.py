@@ -43,6 +43,7 @@ def compute_fft(timestamps, acc):
 
     dt = np.diff(timestamps) / 1000.0
     avg_dt = np.mean(dt)
+
     if avg_dt <= 0:
         return np.array([]), np.array([])
 

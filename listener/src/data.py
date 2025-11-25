@@ -32,7 +32,6 @@ def _read_sample(ser: serial.Serial) -> Sample:
         else:
             break
 
-    print(line)
     segments = line[2:].split(",")
 
     timestamp_ms = int(segments[0])

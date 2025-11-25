@@ -1,14 +1,15 @@
 #include "Arduino.h"
 #include "accelerometer.h"
 
-volatile bool dataReady = false;
+hw_timer_t *timer = nullptr;
+volatile bool tick = false;
+
 Acceleration latestAcc;
 unsigned long latestTimestamp;
 
-void IRAM_ATTR onMPUDataReady()
+void IRAM_ATTR onTimer()
 {
-  // keep ISR tiny
-  dataReady = true;
+  tick = true;
 }
 
 void setup()
@@ -18,20 +19,24 @@ void setup()
 
   setupAccelerometer();
 
-  // attach ESP32 interrupt on GPIO 27 (INT from GY-521)
-  attachInterruptAccel(27, onMPUDataReady);
+  const int sampleRate = 1000; // Hz
+
+  timer = timerBegin(0, 80, true); // 80 MHz / 80 = 1 MHz tick
+  timerAttachInterrupt(timer, &onTimer, true);
+  timerAlarmWrite(timer, 1000000 / sampleRate, true);
+  timerAlarmEnable(timer);
 }
 
 void loop()
 {
-  if (dataReady)
+  if (tick)
   {
     // read timestamp and values in main context
     latestTimestamp = millis();
     latestAcc = readAcceleration();
 
     // reset flag
-    dataReady = false;
+    tick = false;
 
     Serial.print("l:");
     Serial.print(latestTimestamp);

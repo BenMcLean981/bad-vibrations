@@ -10,5 +10,3 @@ struct Acceleration
 };
 
 Acceleration readAcceleration();
-
-void attachInterruptAccel(uint8_t pin, void (*isr)());
