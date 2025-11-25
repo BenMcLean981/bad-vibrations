@@ -44,6 +44,11 @@ def compute_fft(timestamps, acc):
     fft_freqs = np.fft.rfftfreq(len(acc), d=avg_dt)
     fft_mag = np.abs(fft_vals)
 
+    # Exclude the singularity at 0 Hz
+    if len(fft_freqs) > 1:
+        fft_freqs = fft_freqs[1:]
+        fft_mag = fft_mag[1:]
+
     return fft_freqs, fft_mag
 
 
@@ -69,7 +74,7 @@ def update_plot(frame, acc_line, fft_line, fft_ax, peak_texts):
 
     if len(freqs) > 0:
         fft_ax.set_xlim(0, freqs[-1])
-        fft_ax.set_ylim(0, max(mags) * 1.1)
+        fft_ax.set_ylim(0, max(max(mags) * 1.1, 5))
 
     # --- Peak labeling ---
     for txt in peak_texts:

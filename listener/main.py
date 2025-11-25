@@ -1,7 +1,6 @@
 import threading
 import matplotlib
 import serial
-import time
 
 import src.config as config
 from src.data import collect_sample
