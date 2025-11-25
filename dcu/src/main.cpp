@@ -20,18 +20,13 @@ void setup()
 
 void writeValues(unsigned long timestamp, Acceleration acc)
 {
-  Serial.print(timestamp);
-  Serial.print(",");
+  String line = "l:" +
+                String(timestamp) + "," +
+                String(acc.x) + "," +
+                String(acc.y) + "," +
+                String(acc.z);
 
-  Serial.print(acc.x);
-  Serial.print(",");
-
-  Serial.print(acc.y);
-  Serial.print(",");
-
-  Serial.print(acc.z);
-
-  Serial.print("\n");
+  Serial.println(line);
 }
 
 void loop()

@@ -1,4 +1,2 @@
 BAUD_RATE = 115200
 PORT = "/dev/ttyUSB0"
-
-PERIOD = 0.001

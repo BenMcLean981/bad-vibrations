@@ -38,8 +38,6 @@ def compute_fft(timestamps, acc):
     if avg_dt <= 0:
         return np.array([]), np.array([])
 
-    fs = 1.0 / avg_dt  # sampling frequency
-
     fft_vals = np.fft.rfft(acc)
     fft_freqs = np.fft.rfftfreq(len(acc), d=avg_dt)
     fft_mag = np.abs(fft_vals)
@@ -54,6 +52,7 @@ def update_plot(frame, acc_line, fft_line, fft_ax, peak_texts):
         acc = [s.acc_mag for s in SAMPLES]
 
     # --- Time domain plot ---
+    acc_line.set
     acc_line.set_data(timestamps, acc)
 
     if timestamps:
@@ -85,25 +84,25 @@ def update_plot(frame, acc_line, fft_line, fft_ax, peak_texts):
 
 
 def setup_plot():
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 9))
 
     # --- Time-domain plot ---
     ax1.set_title("Live Acceleration Data")
     ax1.set_xlabel("Timestamp (ms)")
-    ax1.set_ylabel("Acceleration (m/s²)")
+    ax1.set_ylabel("Acceleration (g)")
     ax1.grid(True)
-    (acc_line,) = ax1.plot([], [], lw=2, color="black")
+    (acc_line,) = ax1.plot([], [], lw=1, color="black")
 
     # --- FFT plot ---
     ax2.set_title("FFT Magnitude")
     ax2.set_xlabel("Frequency (Hz)")
     ax2.set_ylabel("Magnitude")
     ax2.grid(True)
-    (fft_line,) = ax2.plot([], [], lw=2, color="red")  # ← red line
+    (fft_line,) = ax2.plot([], [], lw=1, color="red")
 
     peak_texts = []
 
-    ani = FuncAnimation(
+    _ani = FuncAnimation(
         fig,
         update_plot,
         fargs=(acc_line, fft_line, ax2, peak_texts),
